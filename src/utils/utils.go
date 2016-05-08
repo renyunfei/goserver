@@ -11,15 +11,18 @@ import (
 )
 
 type Configure struct {
-	Bind      string
-	LogPath   string
-	LogLevel  int
-	Rdeadline int64
-	Wdeadline int64
-	Rbuf      int
-	Wbuf      int
-	Maxgo     int
-	Idleclose int
+	Bind       string
+	LogPath    string
+	LogLevel   int
+	LogFlag    int
+	Debug      int
+	LogMaxSize int64
+	Rdeadline  int64
+	Wdeadline  int64
+	Rbuf       int
+	Wbuf       int
+	Maxgo      int
+	Idleclose  int
 }
 
 func SavePid() {
@@ -72,7 +75,7 @@ func TypeConv(value string, ntype string) (reflect.Value, error) {
 }
 
 func ParseConf(conf *Configure) error {
-	fin, err := os.Open("./server.ini")
+	fin, err := os.Open("./server.conf")
 	defer fin.Close()
 	if err != nil {
 		return err
@@ -95,7 +98,7 @@ func ParseConf(conf *Configure) error {
 				continue
 			}
 
-			k := strings.TrimSpace(kv[0])
+			k := strings.Title(strings.TrimSpace(kv[0]))
 			v := strings.TrimSpace(kv[1])
 
 			field := reflect.ValueOf(conf).Elem().FieldByName(k)

@@ -1,0 +1,5 @@
+21:51:52.072244 INFO Cmd:111 Length:62 Data:hello world Stop:false Size:11
+21:51:53.073378 INFO Cmd:111 Length:62 Data:hello world Stop:false Size:11
+21:51:54.078506 INFO Cmd:111 Length:62 Data:hello world Stop:false Size:11
+21:51:55.083605 INFO Cmd:111 Length:62 Data:hello world Stop:false Size:11
+21:51:55.831467 WARN Decode: Length is NOT equal the length of receive package

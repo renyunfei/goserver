@@ -3,7 +3,6 @@ package conn
 import (
 	"container/list"
 	"fmt"
-	"log"
 	"module"
 	"net"
 	"os"
@@ -17,6 +16,7 @@ import (
 var (
 	Serv = &Server{}
 	Conf = &Configure{}
+	Log  *Logger
 )
 
 type Stat struct {
@@ -43,6 +43,19 @@ type Server struct {
 func InitServer(conf *Configure) error {
 	SavePid()
 
+	// Init log, default Debug mode
+	Log, _ = NewLogger("std", conf.LogFlag, conf.LogLevel)
+
+	// normal mode, log to log file
+	if conf.Debug != 1 {
+		logfile := conf.LogPath + "/" + MakeLogfile()
+		err := Log.SetOutfile(logfile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s", err.Error())
+			return err
+		}
+	}
+
 	// Init Server
 	Serv.conf = conf
 	Serv.bind = conf.Bind
@@ -57,13 +70,13 @@ func InitServer(conf *Configure) error {
 	// Listen bind
 	addr, err := net.ResolveTCPAddr("tcp", Serv.bind)
 	if err != nil {
-		log.Fatal(err)
+		Log.Error(err.Error())
 		return err
 	}
 
 	l, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		log.Println(err)
+		Log.Error(err.Error())
 		return err
 	}
 
@@ -77,12 +90,24 @@ func InitServer(conf *Configure) error {
 			select {
 			case c, ok := <-Serv.newConn:
 				if ok {
-					fmt.Println("new client")
+					Log.Info("New connection")
 					Serv.clients.PushBack(c)
 				}
+
+			case <-time.Tick(time.Second * 5):
+				//Check log size, if gt conf.LogMaxSize, make new log file
+				if conf.Debug != 1 {
+					if ok, _ := Log.CheckSize(conf.LogMaxSize); !ok {
+						logfile := conf.LogPath + "/" + MakeLogfile()
+						err := Log.SetOutfile(logfile)
+						if err != nil {
+							Log.Error(err.Error())
+						}
+					}
+				}
+
 			case <-Serv.sig:
 				Serv.stop = true
-
 				//Notify listener not accept new connection
 				t := time.Now().Add(time.Millisecond * 100)
 				Serv.listener.SetDeadline(t)
@@ -93,7 +118,6 @@ func InitServer(conf *Configure) error {
 					c := c.Value.(Client)
 					c.Req.Conn.SetDeadline(t)
 				}
-
 				return
 			}
 		}
@@ -125,7 +149,7 @@ func (self *Server) Run() {
 
 	err := module.On_init()
 	if err != nil {
-		fmt.Println("%s", err.Error())
+		Log.Error(err.Error())
 		return
 	}
 
@@ -137,7 +161,7 @@ func (self *Server) Run() {
 					continue
 				}
 
-				fmt.Println(err)
+				Log.Error(err.Error())
 			}
 
 			self.wg.Add(1)

@@ -3,11 +3,9 @@ package conn
 import (
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"io"
 	"module"
 	"net"
-	"os"
 	"time"
 )
 
@@ -108,6 +106,7 @@ func NewClient(conn *net.TCPConn) *Client {
 
 func Handle_conn(conn *net.TCPConn) {
 	defer func() {
+		//Log.Info("client from %s break", c.Req.addr.String())
 		Serv.wg.Done()
 		conn.Close()
 	}()
@@ -115,18 +114,16 @@ func Handle_conn(conn *net.TCPConn) {
 	c := NewClient(conn)
 	Serv.newConn <- *c
 
-	//c.SetKeepAlive(true)
-
-	fmt.Printf("client from :%s\n", c.Req.addr.String())
+	Log.Info("new client from %s", c.Req.addr.String())
 
 	for {
 		err := c.unpack()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+			Log.Warn("%s", err.Error())
 			return
 		}
 
-		fmt.Printf("Cmd:%d Length:%d Data:%s Stop:%t Size:%d\n",
+		Log.Info("Cmd:%d Length:%d Data:%s Stop:%t Size:%d\n",
 			c.rmsg.Cmd, c.rmsg.Length, c.rmsg.Data, Serv.stop, len(c.rmsg.Data))
 
 		result, errno := module.On_recv(c.rmsg.Data)

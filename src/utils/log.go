@@ -4,6 +4,7 @@ import (
 	"fmt"
 	stdlog "log"
 	"os"
+	"time"
 )
 
 const (
@@ -105,8 +106,10 @@ func (self *Logger) SetOutfile(logfile string) error {
 			fmt.Println(err.Error())
 			return err
 		}
+		self.logfile = logfile
 		self.log.SetOutput(out)
 	} else {
+		self.logfile = "std"
 		self.log.SetOutput(os.Stdout)
 	}
 
@@ -123,9 +126,16 @@ func (self *Logger) CheckSize(size int64) (bool, error) {
 	return info.Size() < size, nil
 }
 
+func MakeLogfile() string {
+	return time.Now().Format("20060102-150405") + ".log"
+}
+
 /*
 func main() {
-	log, err := NewLogger("std", stdlog.Lshortfile, WARN)
+	dir := "./log"
+	file := MakeLogfile()
+
+	log, err := NewLogger(dir+"/"+file, 2, WARN)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

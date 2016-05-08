@@ -1,0 +1,2 @@
+log.go:74: WARN test123WARN
+log.go:92: ERROR test123ERROR
